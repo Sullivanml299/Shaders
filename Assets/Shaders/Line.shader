@@ -7,8 +7,7 @@ Shader "Unlit/Line"
         [MainColor] _FillColor("Fill Color", Color) = (1, 0, 0, 1)
         _lerp ("lerp", Range(0,1)) = 0.0
         _leadDistance("Leading Distance", Range(0,1)) = 0.1
-        
-        // _vertex("fillVertex", vector) = (0.0, 0.0, 0.0, 0.0)
+
     }
     SubShader
     {
@@ -56,10 +55,6 @@ Shader "Unlit/Line"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // float d = distance(i.worldVertex.xyz, _fillVertex.xyz);
-                // if(d <= 0.1){
-                //     return fixed4(1,0,0,1);
-                // }
                 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
@@ -81,7 +76,6 @@ Shader "Unlit/Line"
                 if(abs(i.uv.x - _lerp) < _leadDistance){
                     return fixed4(0,1,0,1);
                 }
-
 
                 // base color
                 return _BaseColor;
