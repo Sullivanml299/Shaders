@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: LineMaterial
-  m_Shader: {fileID: 4800000, guid: 65f2c4a9028c29c40bdec12a054c9d67, type: 3}
+  m_Name: E2
+  m_Shader: {fileID: 4800000, guid: a7f96e2469f0d0b4bad3ee1b75e6ef96, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -111,9 +111,10 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FillColor: {r: 0.8207547, g: 0, b: 0.67721325, a: 1}
-    - _LeadColor: {r: 0, g: 1, b: 0, a: 1}
+    - _FillColor: {r: 0.006289184, g: 1, b: 1, a: 1}
+    - _LeadColor: {r: 1, g: 0, b: 0.7829156, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _lerp: {r: 0, g: 0, b: 0, a: 0}
     - _vertex: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &8880456098609184981
