@@ -3,8 +3,12 @@ Shader "Unlit/Line"
     Properties
     {
         [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
-        // _lerp ("lerp", Range(0,1)) = 0.0
-        _vertex("fillVertex", vector) = (0.0, 0.0, 0.0, 0.0)
+        [MainColor] _LeadColor("Leading Color", Color) = (0, 1, 0, 1)
+        [MainColor] _FillColor("Fill Color", Color) = (1, 0, 0, 1)
+        _lerp ("lerp", Range(0,1)) = 0.0
+        _leadDistance("Leading Distance", Range(0,1)) = 0.1
+        
+        // _vertex("fillVertex", vector) = (0.0, 0.0, 0.0, 0.0)
     }
     SubShader
     {
@@ -37,6 +41,8 @@ Shader "Unlit/Line"
 
             float3 _fillVertex;
             float4 _BaseColor;
+            float _lerp;
+            float _leadDistance;
 
             v2f vert (appdata v)
             {
@@ -50,13 +56,34 @@ Shader "Unlit/Line"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float d = distance(i.worldVertex.xyz, _fillVertex.xyz);
-                if(d <= 0.1){
-                    return fixed4(1,0,0,1);
-                }
+                // float d = distance(i.worldVertex.xyz, _fillVertex.xyz);
+                // if(d <= 0.1){
+                //     return fixed4(1,0,0,1);
+                // }
                 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
+
+                // fill all
+                if(_lerp >= 1.0){
+                    return fixed4(1,0,0,1);
+                }
+                else if(_lerp <= 0.0){
+                    return _BaseColor;
+                }
+
+                // fill
+                if(_lerp > i.uv.x){
+                    return fixed4(1,0,0,1);
+                }
+
+                // leading edge
+                if(abs(i.uv.x - _lerp) < _leadDistance){
+                    return fixed4(0,1,0,1);
+                }
+
+
+                // base color
                 return _BaseColor;
             }
             ENDCG
