@@ -161,7 +161,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c0ba77ae4969b594db5c6f22fdb505d7, type: 2}
+  - {fileID: 2100000, guid: 13a7a01f213109341bc6236bc8f4b8e0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -270,7 +270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 021b8527bbd5f0748a9034ae46125c9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fillTime: 1
+  fillTime: 2
   active: 0
 --- !u!1 &1871379318
 GameObject:
