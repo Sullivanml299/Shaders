@@ -9,6 +9,11 @@ public class Vines : MonoBehaviour
     public int numVertices = 10;
     public LineRenderer lineRenderer;
     public bool debugDraw = true;
+    [Range(-1, 1)]
+    public float angle = 0f;
+
+    float lastAngle = 0f;
+
     Mesh mesh;
     List<Vector3> vertices = new List<Vector3>();
     List<int> indices = new List<int>();
@@ -28,7 +33,13 @@ public class Vines : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (angle != lastAngle)
+        {
+            lastAngle = angle;
+            pathPoints = new Vector3[lineRenderer.positionCount];
+            lineRenderer.GetPositions(pathPoints);
+            makeCylinderMesh();
+        }
     }
 
     void makeQuadMesh()
@@ -55,18 +66,33 @@ public class Vines : MonoBehaviour
         indices.Clear();
 
         Vector3 start, end;
+        float angleAdjustment = 0;
+        //TODO: fix angle adjustment. Need to adjust the rotation of the circle points based on the angle between the two segments
         //segments 0 to n-1
         for (int i = 0; i < pathPoints.Length - 1; i++)
         {
             start = pathPoints[i];
             end = pathPoints[i + 1];
-            makeRing(start, end, true);
+            if (i > 0)
+            {
+                Vector3 prev = pathPoints[i - 1];
+                angleAdjustment = Vector3.Angle(start - prev, end - start);
+                angleAdjustment = Mathf.Deg2Rad * angleAdjustment;
+                print("angleAdjustment " + angleAdjustment + " percent " + angleAdjustment / (2 * Mathf.PI));
+                // angleAdjustment = Vector3.Dot(offset, averageNormal) > 0 ? angleAdjustment : -angleAdjustment;
+                // angleAdjustment = Mathf.Rad2Deg * angleAdjustment;
+                makeRing(start, end, 2 * Mathf.PI * angle, true); //TODO: replace with angleAdjustment
+            }
+            else
+            {
+                makeRing(start, end, 0, true);
+            }
         }
 
         //segment n
         start = pathPoints[pathPoints.Length - 2];
         end = pathPoints[pathPoints.Length - 1];
-        makeRing(start, end, false);
+        makeRing(start, end, 2 * Mathf.PI * angle, false); //TODO: replace with angleAdjustment
 
         for (int i = 0; i < pathPoints.Length - 1; i++)
         {
@@ -87,7 +113,7 @@ public class Vines : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
-    void makeRing(Vector3 start, Vector3 end, bool atStart = true)
+    void makeRing(Vector3 start, Vector3 end, float angleAdjustment, bool atStart = true)
     {
         Vector3 offset = end - start;
         Vector3 side = Vector3.Cross(offset, Vector3.up).normalized;
@@ -95,7 +121,7 @@ public class Vines : MonoBehaviour
         Vector3 forward = Vector3.Cross(side, offset).normalized;
         for (int j = 0; j < numVertices; j++)
         {
-            float angle = 2 * Mathf.PI * j / numVertices;
+            float angle = 2 * Mathf.PI * j / numVertices + angleAdjustment;
             Vector3 circlePoint = Mathf.Cos(angle) * side + Mathf.Sin(angle) * forward;
             vertices.Add((atStart ? start : end) + circlePoint * radius);
         }
@@ -110,33 +136,19 @@ public class Vines : MonoBehaviour
     {
         if (debugDraw)
         {
-            // Gizmos.DrawLine(transform.position + getCenter(), transform.position + getCenter() + averageNormal);
-            // if (vertices.Count() >= 4)
-            // {
-            //     for (var i = 0; i < vertices.Count; i++)
-            //     {
-            //         Gizmos.color = debugColors[i % 4];
-            //         Gizmos.DrawSphere(transform.position + vertices[i], lineWidth * 0.1f);
-            //     }
-            // }
 
-            Gizmos.color = Color.cyan;
-            foreach (Vector3 vertex in vertices)
+            if (pathPoints != null)
             {
-                Gizmos.DrawSphere(transform.position + vertex, radius * 0.1f);
-            }
+                for (var i = 0; i < pathPoints.Length - 1; i++)
+                {
+                    for (int j = 0; j < numVertices; j++)
+                    {
+                        Vector3 vertex = vertices[i * numVertices + j];
+                        Gizmos.color = Color.Lerp(Color.blue, Color.red, (float)j / numVertices);
+                        Gizmos.DrawSphere(transform.position + vertex, radius * 0.1f);
+                    }
 
-            Gizmos.color = Color.red;
-
-            if (vertices.Count > 0)
-            {
-                Gizmos.color = Color.red;
-                Gizmos.DrawSphere(transform.position + vertices[0], radius * 0.1f);
-                Gizmos.DrawSphere(transform.position + vertices[vertices.Count - 1], radius * 0.1f);
-                Gizmos.color = Color.green;
-                Gizmos.DrawSphere(transform.position + vertices[1], radius * 0.1f);
-                Gizmos.color = Color.blue;
-                Gizmos.DrawSphere(transform.position + vertices[2], radius * 0.1f);
+                }
             }
 
             // Gizmos.color = Color.white;
@@ -148,21 +160,17 @@ public class Vines : MonoBehaviour
             //     }
             // }
 
-            Gizmos.color = Color.green;
-            for (var i = 0; i <= indices.Count - 3; i += 3)
-            {
-                Gizmos.DrawLine(transform.position + vertices[indices[i]],
-                                transform.position + vertices[indices[i + 1]]);
-                Gizmos.DrawLine(transform.position + vertices[indices[i + 1]],
-                                transform.position + vertices[indices[i + 2]]);
-                Gizmos.DrawLine(transform.position + vertices[indices[i + 2]],
-                                transform.position + vertices[indices[i]]);
-            }
-            // if (debugV1 != null && debugV2 != null)
+            // Gizmos.color = Color.green;
+            // for (var i = 0; i <= indices.Count - 3; i += 3)
             // {
-            //     Debug.DrawRay(transform.position + points.Last(), debugV1 * 50, Color.cyan, 0.1f);
-            //     Debug.DrawRay(transform.position + points.Last(), debugV2 * 50, Color.magenta, 0.1f);
+            //     Gizmos.DrawLine(transform.position + vertices[indices[i]],
+            //                     transform.position + vertices[indices[i + 1]]);
+            //     Gizmos.DrawLine(transform.position + vertices[indices[i + 1]],
+            //                     transform.position + vertices[indices[i + 2]]);
+            //     Gizmos.DrawLine(transform.position + vertices[indices[i + 2]],
+            //                     transform.position + vertices[indices[i]]);
             // }
+
         }
     }
 }
