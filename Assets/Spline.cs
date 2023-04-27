@@ -36,7 +36,7 @@ public class Spline : MonoBehaviour
 
     }
 
-    public static List<Vector3> generateCatmullrom(List<Vector3> controlPoints)
+    public static List<Vector3> generateCatmullrom(List<Vector3> controlPoints, int curveVertices = 10)
     {
         List<Vector3> curvePoints = new List<Vector3>();
         for (int i = 0; i < controlPoints.Count - 1; i++)
@@ -51,15 +51,22 @@ public class Spline : MonoBehaviour
                         controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]);
 
 
-            for (int j = 0; j < 10; j++)
+            for (int j = 0; j < curveVertices; j++)
             {
-                float t = j / 10f;
+                float t = j / (float)curveVertices;
                 // Vector3 newPos = CatmullRom(p0, p1, m0, m1, t);
                 Vector3 newPos = CatmullRomMatrix(p0, p1, p2, p3, t);
                 curvePoints.Add(newPos);
             }
         }
         return curvePoints;
+    }
+
+    //TODO: may be more efficient to always use array instead of list
+    public static List<Vector3> generateCatmullrom(Vector3[] controlPoints, int curveVertices = 10)
+    {
+        List<Vector3> controlPointsList = new List<Vector3>(controlPoints);
+        return generateCatmullrom(controlPointsList, curveVertices);
     }
 
     static Vector3 CatmullRomMatrix(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
