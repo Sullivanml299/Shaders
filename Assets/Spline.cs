@@ -34,52 +34,42 @@ public class Spline : MonoBehaviour
         curvePoints.Clear();
         for (int i = 0; i < controlPoints.Count - 1; i++)
         {
-            Vector3 p0 = controlPoints[i];
-            Vector3 p1 = controlPoints[i + 1];
-            Vector3 m0 = Vector3.zero;
-            Vector3 m1 = Vector3.zero;
+            Vector3 p0 = i > 0 ?
+                        controlPoints[i - 1] :
+                        controlPoints[0] - (controlPoints[1] - controlPoints[0]) * 0.5f;
+            Vector3 p1 = controlPoints[i];
+            Vector3 p2 = controlPoints[i + 1];
+            Vector3 p3 = i < controlPoints.Count - 2 ?
+                        controlPoints[i + 2] :
+                        controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]) * 0.5f;
 
-            if (i > 0)
-            {
-                m0 = (controlPoints[i + 1] - controlPoints[i - 1]) * 0.5f;
-            }
-            //make fake first point
-            else
-            {
-                m0 = controlPoints[0] - (controlPoints[1] - controlPoints[0]) * 0.5f;
-            }
-
-            if (i < controlPoints.Count - 2)
-            {
-                m1 = (controlPoints[i + 2] - controlPoints[i]) * 0.5f;
-            }
-            //make fake last point
-            //FIXME: last curve is not generated properly
-            else
-            {
-                m1 = controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]) * 0.5f;
-            }
 
             for (int j = 0; j < 10; j++)
             {
                 float t = j / 10f;
-                Vector3 newPos = CatmullRom(p0, p1, m0, m1, t);
+                // Vector3 newPos = CatmullRom(p0, p1, m0, m1, t);
+                Vector3 newPos = CatmullRomMatrix(p0, p1, p2, p3, t);
                 curvePoints.Add(newPos);
             }
         }
     }
 
-    Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 m0, Vector3 m1, float t)
+    Vector3 CatmullRomMatrix(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
     {
-        float t2 = t * t;
-        float t3 = t2 * t;
-
-        float h00 = 2 * t3 - 3 * t2 + 1;
-        float h01 = -2 * t3 + 3 * t2;
-        float h10 = t3 - 2 * t2 + t;
-        float h11 = t3 - t2;
-
-        return h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1;
+        Vector4 tVec = new Vector4(t * t * t, t * t, t, 1);
+        Matrix4x4 m = new Matrix4x4(
+            new Vector4(-1f, 2f, -1f, 0f) * 0.5f,
+            new Vector4(3f, -5f, 0f, 2f) * 0.5f,
+            new Vector4(-3f, 4f, 1f, 0f) * 0.5f,
+            new Vector4(1f, -1f, 0f, 0f) * 0.5f
+        );
+        Vector4 pVec = new Vector4(p0.x, p1.x, p2.x, p3.x);
+        float x = Vector4.Dot(tVec, m * pVec);
+        pVec = new Vector4(p0.y, p1.y, p2.y, p3.y);
+        float y = Vector4.Dot(tVec, m * pVec);
+        pVec = new Vector4(p0.z, p1.z, p2.z, p3.z);
+        float z = Vector4.Dot(tVec, m * pVec);
+        return new Vector3(x, y, z);
     }
 
     void OnDrawGizmos()
