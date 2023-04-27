@@ -36,12 +36,12 @@ public class Spline : MonoBehaviour
         {
             Vector3 p0 = i > 0 ?
                         controlPoints[i - 1] :
-                        controlPoints[0] - (controlPoints[1] - controlPoints[0]) * 0.5f;
+                        controlPoints[0] - (controlPoints[1] - controlPoints[0]);
             Vector3 p1 = controlPoints[i];
             Vector3 p2 = controlPoints[i + 1];
             Vector3 p3 = i < controlPoints.Count - 2 ?
                         controlPoints[i + 2] :
-                        controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]) * 0.5f;
+                        controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]);
 
 
             for (int j = 0; j < 10; j++)
