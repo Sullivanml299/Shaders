@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class Spline : MonoBehaviour
 {
+    public bool test = false;
     List<Vector3> controlPoints = new List<Vector3>(new Vector3[] {
             new Vector3(0, 0, 0),
             new Vector3(1, 1, 0),
@@ -16,11 +17,17 @@ public class Spline : MonoBehaviour
 
         });
     List<Vector3> curvePoints = new List<Vector3>();
+    static Matrix4x4 m = new Matrix4x4(
+        new Vector4(-1f, 2f, -1f, 0f) * 0.5f,
+        new Vector4(3f, -5f, 0f, 2f) * 0.5f,
+        new Vector4(-3f, 4f, 1f, 0f) * 0.5f,
+        new Vector4(1f, -1f, 0f, 0f) * 0.5f
+    );
 
     // Start is called before the first frame update
     void Start()
     {
-        generateCatmullrom();
+        if (test) curvePoints = generateCatmullrom(controlPoints);
     }
 
     // Update is called once per frame
@@ -29,9 +36,9 @@ public class Spline : MonoBehaviour
 
     }
 
-    void generateCatmullrom()
+    public static List<Vector3> generateCatmullrom(List<Vector3> controlPoints)
     {
-        curvePoints.Clear();
+        List<Vector3> curvePoints = new List<Vector3>();
         for (int i = 0; i < controlPoints.Count - 1; i++)
         {
             Vector3 p0 = i > 0 ?
@@ -52,17 +59,12 @@ public class Spline : MonoBehaviour
                 curvePoints.Add(newPos);
             }
         }
+        return curvePoints;
     }
 
-    Vector3 CatmullRomMatrix(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+    static Vector3 CatmullRomMatrix(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
     {
         Vector4 tVec = new Vector4(t * t * t, t * t, t, 1);
-        Matrix4x4 m = new Matrix4x4(
-            new Vector4(-1f, 2f, -1f, 0f) * 0.5f,
-            new Vector4(3f, -5f, 0f, 2f) * 0.5f,
-            new Vector4(-3f, 4f, 1f, 0f) * 0.5f,
-            new Vector4(1f, -1f, 0f, 0f) * 0.5f
-        );
         Vector4 pVec = new Vector4(p0.x, p1.x, p2.x, p3.x);
         float x = Vector4.Dot(tVec, m * pVec);
         pVec = new Vector4(p0.y, p1.y, p2.y, p3.y);
@@ -74,23 +76,26 @@ public class Spline : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
-        foreach (Vector3 point in controlPoints)
+        if (test)
         {
-            Gizmos.DrawSphere(point, 0.1f);
-        }
+            Gizmos.color = Color.red;
+            foreach (Vector3 point in controlPoints)
+            {
+                Gizmos.DrawSphere(point, 0.1f);
+            }
 
-        Gizmos.color = Color.blue;
-        foreach (Vector3 point in curvePoints)
-        {
-            Gizmos.DrawSphere(point, 0.05f);
-        }
+            Gizmos.color = Color.blue;
+            foreach (Vector3 point in curvePoints)
+            {
+                Gizmos.DrawSphere(point, 0.05f);
+            }
 
-        Gizmos.color = Color.green;
-        var m0 = controlPoints[0] - (controlPoints[1] - controlPoints[0]);
-        var m1 = controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]);
-        Gizmos.DrawSphere(m0, 0.1f);
-        Gizmos.DrawSphere(m1, 0.1f);
+            Gizmos.color = Color.green;
+            var m0 = controlPoints[0] - (controlPoints[1] - controlPoints[0]);
+            var m1 = controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]);
+            Gizmos.DrawSphere(m0, 0.1f);
+            Gizmos.DrawSphere(m1, 0.1f);
+        }
     }
 }
 
