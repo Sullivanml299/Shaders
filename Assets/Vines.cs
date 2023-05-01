@@ -11,11 +11,6 @@ public class Vines : MonoBehaviour
     public bool debugDraw = true;
     public bool drawMesh = true;
 
-    [Range(-1, 1)]
-    public float angle = 0f;
-
-    float lastAngle = 0f;
-
     Mesh mesh;
     List<Vector3> vertices = new List<Vector3>();
     List<int> indices = new List<int>();
@@ -28,10 +23,8 @@ public class Vines : MonoBehaviour
         mesh = new Mesh();
         var controlPoints = new Vector3[lineRenderer.positionCount];
         lineRenderer.GetPositions(controlPoints);
-        pathPoints = Spline.generateCatmullrom(controlPoints, 10).ToArray(); //FIXME: inefficient
-        print("pathPoints " + pathPoints.Length);
+        pathPoints = Spline.generateCatmullrom(controlPoints, 10).ToArray(); //FIXME: .toArray is inefficient
         makeCylinderMesh();
-        // makeQuadMesh();
     }
 
     // Update is called once per frame
@@ -121,26 +114,6 @@ public class Vines : MonoBehaviour
 
                 }
             }
-
-            // Gizmos.color = Color.white;
-            // if (pathPoints != null)
-            // {
-            //     foreach (Vector3 point in pathPoints)
-            //     {
-            //         Gizmos.DrawSphere(transform.position + point, radius * 0.1f);
-            //     }
-            // }
-
-            // Gizmos.color = Color.green;
-            // for (var i = 0; i <= indices.Count - 3; i += 3)
-            // {
-            //     Gizmos.DrawLine(transform.position + vertices[indices[i]],
-            //                     transform.position + vertices[indices[i + 1]]);
-            //     Gizmos.DrawLine(transform.position + vertices[indices[i + 1]],
-            //                     transform.position + vertices[indices[i + 2]]);
-            //     Gizmos.DrawLine(transform.position + vertices[indices[i + 2]],
-            //                     transform.position + vertices[indices[i]]);
-            // }
 
         }
     }
