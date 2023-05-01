@@ -37,67 +37,31 @@ public class Vines : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // if (angle != lastAngle)
-        // {
-        //     lastAngle = angle;
-        //     pathPoints = new Vector3[lineRenderer.positionCount];
-        //     lineRenderer.GetPositions(pathPoints);
-        //     makeCylinderMesh();
-        // }
         if (drawMesh) Graphics.DrawMesh(mesh, transform.localToWorldMatrix, vineMaterial, LayerMask.NameToLayer("Default"));
     }
 
-    void makeQuadMesh()
-    {
-        vertices.Clear();
-        indices.Clear();
-
-        vertices.Add(new Vector3(0, 0, 0));
-        vertices.Add(new Vector3(0, 1, 0));
-        vertices.Add(new Vector3(1, 1, 0));
-        vertices.Add(new Vector3(1, 0, 0));
-
-        indices.AddRange(new int[] { 0, 1, 2, 0, 2, 3 });
-
-        mesh.Clear();
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = indices.ToArray();
-        mesh.RecalculateNormals();
-    }
-
+    /// <summary>
+    /// creates a cylinder mesh along the path defined by pathPoints
+    /// </summary>
     void makeCylinderMesh()
     {
         vertices.Clear();
         indices.Clear();
 
         Vector3 start, end;
-        float angleAdjustment = 0;
-        //TODO: fix angle adjustment. Need to adjust the rotation of the circle points based on the angle between the two segments
         //segments 0 to n-1
         for (int i = 0; i < pathPoints.Length - 1; i++)
         {
             start = pathPoints[i];
             end = pathPoints[i + 1];
-            if (i > 0)
-            {
-                Vector3 prev = pathPoints[i - 1];
-                angleAdjustment = Vector3.Angle(start - prev, end - start);
-                angleAdjustment = Mathf.Deg2Rad * angleAdjustment;
-                // print("angleAdjustment " + angleAdjustment + " percent " + angleAdjustment / (2 * Mathf.PI));
-                // angleAdjustment = Vector3.Dot(offset, averageNormal) > 0 ? angleAdjustment : -angleAdjustment;
-                // angleAdjustment = Mathf.Rad2Deg * angleAdjustment;
-                makeRing(start, end, 2 * Mathf.PI * angle, true); //TODO: replace with angleAdjustment
-            }
-            else
-            {
-                makeRing(start, end, 0, true);
-            }
+            makeRing(start, end, true);
+
         }
 
         //segment n
         start = pathPoints[pathPoints.Length - 2];
         end = pathPoints[pathPoints.Length - 1];
-        makeRing(start, end, 2 * Mathf.PI * angle, false); //TODO: replace with angleAdjustment
+        makeRing(start, end, false);
 
         for (int i = 0; i < pathPoints.Length - 1; i++)
         {
@@ -116,18 +80,22 @@ public class Vines : MonoBehaviour
         mesh.RecalculateNormals();
     }
 
-    void makeRing(Vector3 start, Vector3 end, float angleAdjustment, bool atStart = true)
+    /// <summary>
+    /// creates a ring of vertices around the axis defined by start and end. 
+    /// Using Quaternions is important to avoid gimbal lock side effects.
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <param name="atStart">if true, generate the points at the start position</param>
+    void makeRing(Vector3 start, Vector3 end, bool atStart = true)
     {
         Vector3 offset = end - start;
-        Vector3 side = Vector3.Cross(offset, Vector3.up).normalized;
-        if (side == Vector3.zero) side = new Vector3(1, 0, 0);
-        // else side = new Vector3(Mathf.Abs(side.x), Mathf.Abs(side.y), Mathf.Abs(side.z));
-        Vector3 forward = Vector3.Cross(side, offset).normalized;
-        // forward = new Vector3(Mathf.Abs(forward.x), Mathf.Abs(forward.y), Mathf.Abs(forward.z));
-        print("side " + side + " forward " + forward + " offset " + offset + " dot " + Vector3.Dot(Vector3.up, forward));
+        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, offset);
+        Vector3 side = rotation * Vector3.right;
+        Vector3 forward = rotation * Vector3.forward;
         for (int j = 0; j < numVertices; j++)
         {
-            float angle = 2 * Mathf.PI * j / numVertices + angleAdjustment;
+            float angle = 2 * Mathf.PI * j / numVertices;
             Vector3 circlePoint = Mathf.Cos(angle) * side + Mathf.Sin(angle) * forward;
             vertices.Add((atStart ? start : end) + circlePoint * radius);
         }
