@@ -522,12 +522,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   vineMaterial: {fileID: 2100000, guid: e23bf1d72c580da458e429768d819a89, type: 2}
-  radius: 0.1
-  numVertices: 10
+  radius: 0.01
+  splineSegmentResolution: 10
+  numVertices: 4
   lineRenderer: {fileID: 801190280}
   debugDraw: 1
   drawMesh: 1
-  angle: 0
 --- !u!4 &1721958270
 Transform:
   m_ObjectHideFlags: 0
