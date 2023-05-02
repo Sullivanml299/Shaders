@@ -70,12 +70,30 @@ public class Vines : MonoBehaviour
             else
             {
                 // push old vertices along the vine
+                //TODO: also need to offset position based on change in rotation
                 Vector3 start = pathPoints[numSegments - i - 1];
                 Vector3 end = pathPoints[numSegments - i];
-                Vector3 offset = (end - start) / growthInterval * Time.deltaTime;
+                Vector3 positionOffset = (end - start) / growthInterval * Time.deltaTime;
+
+                //FIXME: rotation is wrong
+                Quaternion rotation = Quaternion.Slerp(
+                                        Quaternion.FromToRotation(Vector3.up, (end - start).normalized),
+                                        Quaternion.FromToRotation(Vector3.up, (end - pathPoints[numSegments - i + 1]).normalized),
+                                        ellapsedTime % growthInterval / growthInterval);
+                Matrix4x4 mR = Matrix4x4.Rotate(rotation);
+                Matrix4x4 mT = Matrix4x4.Translate(positionOffset);
+                Matrix4x4 m = mT.inverse * mR * mT;
+                m = mT;
                 for (var j = 0; j < numVertices; j++)
                 {
-                    vertices[i * numVertices + j] += offset;
+                    // vertices[i * numVertices + j] += positionOffset;
+                    Matrix4x4 mT2 = Matrix4x4.Translate(start + positionOffset);
+                    //FIXME: translation may be slightly off. Basically need to translate to origin, rotate, translate back, translate to new position
+                    vertices[i * numVertices + j] = mT2.inverse.MultiplyPoint(vertices[i * numVertices + j]);
+                    vertices[i * numVertices + j] = mR.MultiplyPoint(vertices[i * numVertices + j]);
+                    vertices[i * numVertices + j] = mT2.MultiplyPoint(vertices[i * numVertices + j]);
+                    vertices[i * numVertices + j] = m.MultiplyPoint(vertices[i * numVertices + j]);
+
                 }
             }
         }
