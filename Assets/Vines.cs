@@ -57,7 +57,7 @@ public class Vines : MonoBehaviour
     {
         // use ellapsedTime to determine number of segments
         int numSegments = Mathf.FloorToInt(ellapsedTime / growthInterval);
-
+        print("t: " + ellapsedTime % growthInterval / growthInterval);
         for (var i = 0; i < numSegments; i++)
         {
             if (vertices.Count < numSegments * numVertices)
@@ -76,9 +76,11 @@ public class Vines : MonoBehaviour
                 Vector3 positionOffset = (end - start) / growthInterval * Time.deltaTime;
 
                 //FIXME: rotation is wrong
+                Quaternion startRotation = Quaternion.FromToRotation(Vector3.up, (end - start));
+                Quaternion endRotation = Quaternion.FromToRotation(Vector3.up, (end - pathPoints[numSegments - i + 1]));
                 Quaternion rotation = Quaternion.Slerp(
-                                        Quaternion.FromToRotation(Vector3.up, (end - start).normalized),
-                                        Quaternion.FromToRotation(Vector3.up, (end - pathPoints[numSegments - i + 1]).normalized),
+                                        startRotation,
+                                        endRotation,
                                         ellapsedTime % growthInterval / growthInterval);
                 Matrix4x4 mR = Matrix4x4.Rotate(rotation);
                 Matrix4x4 mT = Matrix4x4.Translate(positionOffset);
