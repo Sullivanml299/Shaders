@@ -8,31 +8,50 @@ public class QuaternionTest : MonoBehaviour
     [Range(0f, 1f)]
     public float t = 0f;
     public bool manualControl = false;
-    Vector3 p1 = new Vector3(0.1f, 0, 0);
-    Vector3 p2 = new Vector3(0, 1, 0);
-    Vector3 p3 = new Vector3(0, 1, 1);
-    Vector3 p = new Vector3(0.1f, 0, -1);
+    public bool toggle = true;
+    public Vector3 p1 = new Vector3(0, 0, 0);
+    public Vector3 p2 = new Vector3(0, 0.75f, 0.25f);
+    public Vector3 p3 = new Vector3(0, 1, 1);
+    public Vector3 p = new Vector3(0, 0, -1);
     Vector3 v1, v2, v;
     Quaternion q1, q2, q;
     float segmentInterval;
     float ellapsedTime = 0f;
     float t_last = 0f;
+    bool lastToggle = true;
 
     // Start is called before the first frame update
     void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
     {
         v1 = p2 - p1;
         v2 = p3 - p2;
         q1 = Quaternion.FromToRotation(Vector3.up, v1);
         q2 = Quaternion.FromToRotation(Vector3.up, v2);
         segmentInterval = time / 2f;
+        // if (manualControl) manualTest();
+        // else if (ellapsedTime < time) test();
+        if (toggle != lastToggle) matrixTest();
     }
 
-    // Update is called once per frame
-    void Update()
+    void matrixTest()
     {
-        if (manualControl) manualTest();
-        else if (ellapsedTime < time) test();
+        print("toggle");
+        q = Quaternion.FromToRotation(v1, v2);
+        // Matrix4x4 mO = Matrix4x4.Translate(p);
+        Matrix4x4 mT = !toggle ? Matrix4x4.Translate(v1 + v2) : Matrix4x4.Translate(v1 + v2).inverse;
+        Matrix4x4 mR = !toggle ? Matrix4x4.Rotate(q) : Matrix4x4.Rotate(q).inverse;
+
+        Matrix4x4 m = !toggle ? mT * mR : mR * mT;
+
+        p = m.MultiplyPoint3x4(p);
+
+        lastToggle = toggle;
     }
 
     void test()
@@ -44,9 +63,18 @@ public class QuaternionTest : MonoBehaviour
         Vector3 path = end - start;
 
         Vector3 positionOffset = path / segmentInterval * Time.deltaTime;
-        Matrix4x4 m = Matrix4x4.Translate(positionOffset);
-        q = Quaternion.Slerp(q1, q2, t);
-        p = m.MultiplyPoint3x4(p);
+        float angle = Quaternion.Angle(q1, q2);
+        q = Quaternion.RotateTowards(q1, q2, angle / segmentInterval);
+
+        Matrix4x4 mT = Matrix4x4.Translate(positionOffset);
+        Matrix4x4 mO = Matrix4x4.Translate(p);
+        Matrix4x4 mR = Matrix4x4.Rotate(q);
+
+        // q = Quaternion.Slerp(q1, q2, t);
+        p = mO.inverse.MultiplyPoint3x4(p);
+        p = mR.MultiplyPoint3x4(p);
+        p = mO.MultiplyPoint3x4(p);
+        p = mT.MultiplyPoint3x4(p);
 
         ellapsedTime += Time.deltaTime;
     }
@@ -60,7 +88,7 @@ public class QuaternionTest : MonoBehaviour
 
         // Vector3 positionOffset = path / segmentInterval * (t - t_last);
         // Matrix4x4 m = Matrix4x4.Translate(positionOffset);
-        q = Quaternion.Slerp(q1, q2, t);
+        // q = Quaternion.Slerp(q1, q2, t);
         // p = m.MultiplyPoint3x4(p);
 
         t_last = t;
