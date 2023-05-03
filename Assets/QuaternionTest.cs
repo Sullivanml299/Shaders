@@ -13,7 +13,8 @@ public class QuaternionTest : MonoBehaviour
     public Vector3 p2 = new Vector3(0, 0.75f, 0.25f);
     public Vector3 p3 = new Vector3(0, 1, 1);
     public Vector3 p = new Vector3(0, 0, -1);
-    Vector3 v1, v2, v;
+    public Vector3 pModel = new Vector3(0, 0, -1);
+    Vector3 v1, v2;
     Quaternion q1, q2, q;
     float segmentInterval;
     float ellapsedTime = 0f;
@@ -53,6 +54,8 @@ public class QuaternionTest : MonoBehaviour
 
         lastToggle = toggle;
     }
+
+
 
     void test()
     {

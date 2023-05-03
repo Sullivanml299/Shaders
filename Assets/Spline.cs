@@ -48,17 +48,20 @@ public class Spline : MonoBehaviour
             Vector3 p2 = controlPoints[i + 1];
             Vector3 p3 = i < controlPoints.Count - 2 ?
                         controlPoints[i + 2] :
-                        controlPoints[controlPoints.Count - 1] - (controlPoints[controlPoints.Count - 2] - controlPoints[controlPoints.Count - 1]);
+                        controlPoints[controlPoints.Count - 1] + (controlPoints[controlPoints.Count - 1] - controlPoints[controlPoints.Count - 2]);
 
-
+            //Note: to avoid duplicate points we lerp from 0 to (curveVertices - 1)/curveVertices
             for (int j = 0; j < curveVertices; j++)
             {
                 float t = j / (float)curveVertices;
-                // Vector3 newPos = CatmullRom(p0, p1, m0, m1, t);
                 Vector3 newPos = CatmullRomMatrix(p0, p1, p2, p3, t);
                 curvePoints.Add(newPos);
             }
         }
+
+        //add last point
+        curvePoints.Add(controlPoints[controlPoints.Count - 1]);
+
         return curvePoints;
     }
 
