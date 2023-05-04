@@ -16,7 +16,7 @@ public class CatmullVelocity : MonoBehaviour
     [Range(0f, 51f)]
     public float t = 0f;
     public bool auto = false;
-    [Range(1f, 5f)]
+    [Range(0.5f, 5f)]
     public float speed = 1f;
 
     List<Vector3> pathPoints;
