@@ -19,13 +19,17 @@ public class CatmullVelocity : MonoBehaviour
     [Range(0.5f, 5f)]
     public float speed = 1f;
 
+    public GameObject model; // model to move along the spline. Not related to modelPosition
+
     List<Vector3> pathPoints;
     List<Vector3> tangents;
     Vector3 currentVelocity = Vector3.zero;
-    Vector3 currentPosition = Vector3.zero;
-    Vector3 TestPosition = new Vector3(-0.5f, 0, 0);
-    Vector3 modelPosition = new Vector3(-0.5f, 0, 0);
+    Vector3 currentPosition = Vector3.zero; // position on the spline
+    Vector3 TestPosition = new Vector3(-0.5f, 0, 0); // position of test point on the spline
+    Vector3 modelPosition = new Vector3(-0.5f, 0, 0); // position of test point in an imaginary model
     Vector3 up = Vector3.up;
+    Quaternion correctionRotation;
+    bool isSet = false;
 
 
     // Start is called before the first frame update
@@ -33,7 +37,6 @@ public class CatmullVelocity : MonoBehaviour
     {
         pathPoints = Spline.generateCatmullrom(controlPoints, verticesPerSegment);
         calculateTangents();
-        print(pathPoints.Count);
     }
 
     // Update is called once per frame
@@ -45,7 +48,20 @@ public class CatmullVelocity : MonoBehaviour
         updateCurrentPosition(segment, segmentT);
         updateVelocityVector(segment, segmentT);
         updateTestPosition(segment, segmentT);
+        moveModelAlongPath();
+    }
 
+    void moveModelAlongPath()
+    {
+        //Account for current rotation so that I can keep the desired part of the model facing forward
+        if (!isSet)
+        {
+            correctionRotation = Quaternion.Inverse(model.transform.rotation) * Quaternion.LookRotation(currentVelocity, Vector3.up);
+            print(correctionRotation);
+            isSet = true;
+        }
+        model.transform.position = currentPosition;
+        model.transform.rotation = Quaternion.LookRotation(currentVelocity, Vector3.up) * correctionRotation;
     }
 
     void updateTestPosition(int segment, float segmentT)
@@ -70,12 +86,21 @@ public class CatmullVelocity : MonoBehaviour
                             pathPoints[pathPoints.Count - 1] + (pathPoints[pathPoints.Count - 1] - pathPoints[pathPoints.Count - 2]) * 2 :
                             pathPoints[segment + 2];
 
-            Vector3 tangent1 = (end - prev).normalized;
-            Vector3 tangent2 = (next - start).normalized;
+            //// The correct way
+            // Vector3 tangent1 = (end - prev).normalized;
+            // Vector3 tangent2 = (next - start).normalized;
 
-            // Quaternion q = Quaternion.LookRotation(tangent, modelPosition.normalized);
-            Quaternion q1 = Quaternion.LookRotation(tangent1, Vector3.Cross(Vector3.up, tangent1));
-            Quaternion q2 = Quaternion.LookRotation(tangent2, Vector3.Cross(Vector3.up, tangent2));
+            // Quaternion q1 = Quaternion.LookRotation(tangent1, Vector3.Cross(Vector3.up, tangent1));
+            // Quaternion q2 = Quaternion.LookRotation(tangent2, Vector3.Cross(Vector3.up, tangent2));
+            // Quaternion q = Quaternion.Slerp(q1, q2, segmentT);
+            // up = q.eulerAngles.normalized;
+
+            // the good enough way
+            Vector3 forward1 = (end - start).normalized;
+            Vector3 forward2 = (next - end).normalized;
+
+            Quaternion q1 = Quaternion.LookRotation(forward1, Vector3.Cross(Vector3.up, forward1));
+            Quaternion q2 = Quaternion.LookRotation(forward2, Vector3.Cross(Vector3.up, forward2));
             Quaternion q = Quaternion.Slerp(q1, q2, segmentT);
             up = q.eulerAngles.normalized;
 
@@ -171,8 +196,9 @@ public class CatmullVelocity : MonoBehaviour
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity * 2f);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawSphere(currentPosition, 0.1f);
+
+        // Gizmos.color = Color.yellow;
+        // Gizmos.DrawSphere(currentPosition, 0.1f);
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawSphere(TestPosition, 0.1f);
