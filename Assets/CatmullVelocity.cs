@@ -66,10 +66,11 @@ public class CatmullVelocity : MonoBehaviour
 
             TestPositionBase = Vector3.Lerp(start, end, segmentT);
 
-            Matrix4x4 mO = Matrix4x4.Translate(TestPositionBase);
+            Matrix4x4 mT = Matrix4x4.Translate(TestPositionBase);
             Matrix4x4 mR = Matrix4x4.Rotate(q);
-            Matrix4x4 m = mO * mR * mO.inverse;
+            Matrix4x4 m = mT * mR;
             TestPosition = m.MultiplyPoint3x4(modelPosition);
+            print("Distance: " + Vector3.Distance(TestPositionBase, TestPosition));
         }
 
     }
