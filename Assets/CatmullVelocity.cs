@@ -20,6 +20,7 @@ public class CatmullVelocity : MonoBehaviour
     public float speed = 1f;
 
     public GameObject model; // model to move along the spline. Not related to modelPosition
+    public bool debugDraw = true;
 
     List<Vector3> pathPoints;
     List<Vector3> tangents;
@@ -169,42 +170,44 @@ public class CatmullVelocity : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        for (int i = 0; i < controlPoints.Count; i++)
+        if (debugDraw)
         {
-            Gizmos.color = Color.Lerp(Color.green, Color.red, (float)i / (float)controlPoints.Count);
-            Gizmos.DrawSphere(controlPoints[i], 0.1f);
-        }
-
-        if (pathPoints != null)
-        {
-            for (int i = 0; i < pathPoints.Count; i++)
+            for (int i = 0; i < controlPoints.Count; i++)
             {
-                Gizmos.color = Color.Lerp(Color.white, Color.blue, (float)i / (float)pathPoints.Count);
-                Gizmos.DrawSphere(pathPoints[i], 0.05f);
+                Gizmos.color = Color.Lerp(Color.green, Color.red, (float)i / (float)controlPoints.Count);
+                Gizmos.DrawSphere(controlPoints[i], 0.1f);
             }
-        }
 
-        //draw tangents
-        if (tangents != null)
-        {
-            for (int i = 0; i < tangents.Count; i++)
+            if (pathPoints != null)
             {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawLine(pathPoints[i], pathPoints[i] + tangents[i] * 1.5f);
+                for (int i = 0; i < pathPoints.Count; i++)
+                {
+                    Gizmos.color = Color.Lerp(Color.white, Color.blue, (float)i / (float)pathPoints.Count);
+                    Gizmos.DrawSphere(pathPoints[i], 0.05f);
+                }
             }
+
+            //draw tangents
+            if (tangents != null)
+            {
+                for (int i = 0; i < tangents.Count; i++)
+                {
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawLine(pathPoints[i], pathPoints[i] + tangents[i] * 1.5f);
+                }
+            }
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity * 2f);
+
+            // Gizmos.color = Color.yellow;
+            // Gizmos.DrawSphere(currentPosition, 0.1f);
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawSphere(TestPosition, 0.1f);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(currentPosition, currentPosition + up);
         }
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity * 2f);
-
-        // Gizmos.color = Color.yellow;
-        // Gizmos.DrawSphere(currentPosition, 0.1f);
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(TestPosition, 0.1f);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(currentPosition, currentPosition + up);
-
     }
 }
