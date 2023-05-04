@@ -20,6 +20,9 @@ public class CatmullVelocity : MonoBehaviour
     List<Vector3> tangents;
     Vector3 currentVelocity = Vector3.zero;
     Vector3 currentPosition = Vector3.zero;
+    Vector3 TestPosition = new Vector3(-0.5f, 0, 0);
+    Vector3 modelPosition = new Vector3(-0.5f, 0, 0);
+    Vector3 up = Vector3.up;
 
 
     // Start is called before the first frame update
@@ -37,6 +40,38 @@ public class CatmullVelocity : MonoBehaviour
         float segmentT = t - segment;
         updateCurrentPosition(segment, segmentT);
         updateVelocityVector(segment, segmentT);
+        updateTestPosition(segment, segmentT);
+
+    }
+
+    void updateTestPosition(int segment, float segmentT)
+    {
+
+        Vector3 TestPositionBase;
+
+        if (segment >= pathPoints.Count - 1)
+        {
+            TestPositionBase = pathPoints[pathPoints.Count - 1];
+        }
+        else
+        {
+            Vector3 start = pathPoints[segment];
+            Vector3 end = pathPoints[segment + 1];
+            Vector3 next = pathPoints[segment + 2];
+
+            Vector3 tangent = (next - start).normalized;
+            // Quaternion q = Quaternion.LookRotation(tangent, modelPosition.normalized);
+            Quaternion q = Quaternion.LookRotation(tangent, Vector3.Cross(Vector3.up, tangent));
+            up = q.eulerAngles;
+
+            TestPositionBase = Vector3.Lerp(start, end, segmentT);
+
+            Matrix4x4 mO = Matrix4x4.Translate(TestPositionBase);
+            Matrix4x4 mR = Matrix4x4.Rotate(q);
+            Matrix4x4 m = mO * mR * mO.inverse;
+            TestPosition = m.MultiplyPoint3x4(modelPosition);
+        }
+
     }
 
     void updateCurrentPosition(int segment, float segmentT)
@@ -48,9 +83,8 @@ public class CatmullVelocity : MonoBehaviour
         }
 
         Vector3 start = pathPoints[segment];
-        Vector3 end = segment != pathPoints.Count - 1 ?
-                      pathPoints[segment + 1] :
-                      pathPoints[segment] + (pathPoints[segment] - pathPoints[segment - 1]);
+        Vector3 end = pathPoints[segment + 1];
+
 
         currentPosition = Vector3.Lerp(start, end, segmentT);
     }
@@ -124,6 +158,12 @@ public class CatmullVelocity : MonoBehaviour
         Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity * 2f);
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(currentPosition, 0.1f);
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawSphere(TestPosition, 0.1f);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(currentPosition, currentPosition + up * 2f);
 
     }
 }
