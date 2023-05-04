@@ -15,6 +15,9 @@ public class CatmullVelocity : MonoBehaviour
     };
     [Range(0f, 51f)]
     public float t = 0f;
+    public bool auto = false;
+    [Range(1f, 5f)]
+    public float speed = 1f;
 
     List<Vector3> pathPoints;
     List<Vector3> tangents;
@@ -36,6 +39,7 @@ public class CatmullVelocity : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (auto && t < 51) t += Time.deltaTime * speed;
         int segment = Mathf.FloorToInt(t);
         float segmentT = t - segment;
         updateCurrentPosition(segment, segmentT);
@@ -55,14 +59,25 @@ public class CatmullVelocity : MonoBehaviour
         }
         else
         {
+            Vector3 prev = segment == 0 ?
+                            pathPoints[0] - (pathPoints[1] - pathPoints[0]) :
+                            pathPoints[segment - 1];
             Vector3 start = pathPoints[segment];
-            Vector3 end = pathPoints[segment + 1];
-            Vector3 next = pathPoints[segment + 2];
+            Vector3 end = segment == pathPoints.Count - 1 ?
+                            pathPoints[pathPoints.Count - 1] + (pathPoints[pathPoints.Count - 1] - pathPoints[pathPoints.Count - 2]) :
+                            pathPoints[segment + 1];
+            Vector3 next = segment == pathPoints.Count - 2 ?
+                            pathPoints[pathPoints.Count - 1] + (pathPoints[pathPoints.Count - 1] - pathPoints[pathPoints.Count - 2]) * 2 :
+                            pathPoints[segment + 2];
 
-            Vector3 tangent = (next - start).normalized;
+            Vector3 tangent1 = (end - prev).normalized;
+            Vector3 tangent2 = (next - start).normalized;
+
             // Quaternion q = Quaternion.LookRotation(tangent, modelPosition.normalized);
-            Quaternion q = Quaternion.LookRotation(tangent, Vector3.Cross(Vector3.up, tangent));
-            up = q.eulerAngles;
+            Quaternion q1 = Quaternion.LookRotation(tangent1, Vector3.Cross(Vector3.up, tangent1));
+            Quaternion q2 = Quaternion.LookRotation(tangent2, Vector3.Cross(Vector3.up, tangent2));
+            Quaternion q = Quaternion.Slerp(q1, q2, segmentT);
+            up = q.eulerAngles.normalized;
 
             TestPositionBase = Vector3.Lerp(start, end, segmentT);
 
@@ -70,7 +85,6 @@ public class CatmullVelocity : MonoBehaviour
             Matrix4x4 mR = Matrix4x4.Rotate(q);
             Matrix4x4 m = mT * mR;
             TestPosition = m.MultiplyPoint3x4(modelPosition);
-            print("Distance: " + Vector3.Distance(TestPositionBase, TestPosition));
         }
 
     }
@@ -164,7 +178,7 @@ public class CatmullVelocity : MonoBehaviour
         Gizmos.DrawSphere(TestPosition, 0.1f);
 
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(currentPosition, currentPosition + up * 2f);
+        Gizmos.DrawLine(currentPosition, currentPosition + up);
 
     }
 }
