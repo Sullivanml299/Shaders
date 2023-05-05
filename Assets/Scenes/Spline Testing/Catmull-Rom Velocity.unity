@@ -672,6 +672,16 @@ MonoBehaviour:
   speed: 1
   model: {fileID: 605062076}
   debugDraw: 1
+  drawControlPoints: 1
+  drawCurvePoints: 0
+  drawTangents: 0
+  drawCurrentVelocity: 1
+  drawCurrentPosition: 1
+  drawTestPoint: 1
+  drawUpVector: 1
+  drawLookVector: 1
+  look: {x: 0, y: 1, z: 0}
+  tangent: {x: 0, y: 0, z: 1}
 --- !u!4 &1581594779
 Transform:
   m_ObjectHideFlags: 0

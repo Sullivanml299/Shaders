@@ -21,6 +21,17 @@ public class CatmullVelocity : MonoBehaviour
 
     public GameObject model; // model to move along the spline. Not related to modelPosition
     public bool debugDraw = true;
+    public bool drawControlPoints = true;
+    public bool drawCurvePoints = true;
+    public bool drawTangents = true;
+    public bool drawCurrentVelocity = true;
+    public bool drawCurrentPosition = true;
+    public bool drawTestPoint = true;
+    public bool drawUpVector = true;
+    public bool drawLookVector = true;
+    public Vector3 look = Vector3.up;
+    public Vector3 tangent = Vector3.forward;
+
 
     List<Vector3> pathPoints;
     List<Vector3> tangents;
@@ -57,12 +68,14 @@ public class CatmullVelocity : MonoBehaviour
         //Account for current rotation so that I can keep the desired part of the model facing forward
         if (!isSet)
         {
+            //subtract current rotation from caluclated starting rotation
             correctionRotation = Quaternion.Inverse(model.transform.rotation) * Quaternion.LookRotation(currentVelocity, Vector3.up);
-            print(correctionRotation);
             isSet = true;
         }
         model.transform.position = currentPosition;
-        model.transform.rotation = Quaternion.LookRotation(currentVelocity, Vector3.up) * correctionRotation;
+        model.transform.rotation = Quaternion.LookRotation(currentVelocity, Vector3.up);//* correctionRotation;
+        tangent = currentVelocity;
+        look = Quaternion.LookRotation(currentVelocity, Vector3.up).eulerAngles;
     }
 
     void updateTestPosition(int segment, float segmentT)
@@ -103,7 +116,6 @@ public class CatmullVelocity : MonoBehaviour
             Quaternion q1 = Quaternion.LookRotation(forward1, Vector3.Cross(Vector3.up, forward1));
             Quaternion q2 = Quaternion.LookRotation(forward2, Vector3.Cross(Vector3.up, forward2));
             Quaternion q = Quaternion.Slerp(q1, q2, segmentT);
-            up = q.eulerAngles.normalized;
 
             TestPositionBase = Vector3.Lerp(start, end, segmentT);
 
@@ -172,42 +184,77 @@ public class CatmullVelocity : MonoBehaviour
     {
         if (debugDraw)
         {
-            for (int i = 0; i < controlPoints.Count; i++)
+            //draw control points
+            if (drawControlPoints)
             {
-                Gizmos.color = Color.Lerp(Color.green, Color.red, (float)i / (float)controlPoints.Count);
-                Gizmos.DrawSphere(controlPoints[i], 0.1f);
+                for (int i = 0; i < controlPoints.Count; i++)
+                {
+                    Gizmos.color = Color.Lerp(Color.green, Color.red, (float)i / (float)controlPoints.Count);
+                    Gizmos.DrawSphere(controlPoints[i], 0.1f);
+                }
+
             }
 
-            if (pathPoints != null)
+            //draw path points
+            if (drawCurvePoints)
             {
-                for (int i = 0; i < pathPoints.Count; i++)
+                if (pathPoints != null)
                 {
-                    Gizmos.color = Color.Lerp(Color.white, Color.blue, (float)i / (float)pathPoints.Count);
-                    Gizmos.DrawSphere(pathPoints[i], 0.05f);
+                    for (int i = 0; i < pathPoints.Count; i++)
+                    {
+                        Gizmos.color = Color.Lerp(Color.white, Color.blue, (float)i / (float)pathPoints.Count);
+                        Gizmos.DrawSphere(pathPoints[i], 0.05f);
+                    }
                 }
             }
 
             //draw tangents
-            if (tangents != null)
+            if (drawTangents)
             {
-                for (int i = 0; i < tangents.Count; i++)
+                if (tangents != null)
                 {
-                    Gizmos.color = Color.magenta;
-                    Gizmos.DrawLine(pathPoints[i], pathPoints[i] + tangents[i] * 1.5f);
+                    for (int i = 0; i < tangents.Count; i++)
+                    {
+                        Gizmos.color = Color.magenta;
+                        Gizmos.DrawLine(pathPoints[i], pathPoints[i] + tangents[i] * 1.5f);
+                    }
                 }
             }
 
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity * 2f);
+            //draw current position
+            if (drawCurrentPosition)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawSphere(currentPosition, 0.1f);
+            }
 
-            // Gizmos.color = Color.yellow;
-            // Gizmos.DrawSphere(currentPosition, 0.1f);
+            //draw test position
+            if (drawTestPoint)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawSphere(TestPosition, 0.1f);
+            }
 
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawSphere(TestPosition, 0.1f);
+            //draw up
+            if (drawUpVector)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawLine(currentPosition, currentPosition + up);
+            }
 
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(currentPosition, currentPosition + up);
+            if (drawLookVector)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(currentPosition, currentPosition + look.normalized);
+            }
+
+            //draw current velocity
+            if (drawCurrentVelocity)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity.normalized);
+            }
+
         }
     }
 }
