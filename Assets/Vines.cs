@@ -12,6 +12,8 @@ public class Vines : MonoBehaviour
     public LineRenderer lineRenderer;
     public bool debugDraw = true;
     public bool drawMesh = true;
+    [Range(0f, 20f)]
+    public float t = 0f; // time along the spline
 
     Mesh mesh;
     List<Vector3> vertices = new List<Vector3>();
@@ -20,8 +22,8 @@ public class Vines : MonoBehaviour
     float growthInterval; // time between each segment growth
     [Range(0f, 0.5f)] //TODO: remove this
     public float ellapsedTime = 0f;
-    [Range(0f, 1f)]
-    public float lerpTest = 0f;
+    List<Vector3> model = new List<Vector3>();
+    float t_last = 0f; //used for testing only
 
 
 
@@ -34,16 +36,18 @@ public class Vines : MonoBehaviour
         pathPoints = Spline.generateCatmullrom(controlPoints, splineSegmentResolution).ToArray(); //FIXME: .toArray is inefficient
 
         growthInterval = growthTime / pathPoints.Length;
-        print(growthInterval);
         // makeCylinderMesh();
+        makeRingModel();
+        vertices.AddRange(model);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (ellapsedTime < growthTime)
+        if (t != t_last)
         {
-            updateVineMeshPush();
+            t_last = t;
+            updateVineMesh();
         }
         if (drawMesh) Graphics.DrawMesh(mesh, transform.localToWorldMatrix, vineMaterial, LayerMask.NameToLayer("Default"));
     }
@@ -51,109 +55,53 @@ public class Vines : MonoBehaviour
     /// <summary>
     /// creates a growing mesh that extend along the path defined by pathPoints
     /// over time.
-    /// Adds vertices to the base of the vine. Pushes old vertices along the vine. 
+    /// Adds vertices to the base of the vine. "Pushes" old vertices along the vine. 
     /// </summary>
-    void updateVineMeshPush()
-    {
-        // use ellapsedTime to determine number of segments
-        int numSegments = Mathf.FloorToInt(ellapsedTime / growthInterval);
-        print("t: " + ellapsedTime % growthInterval / growthInterval);
-        for (var i = 0; i < numSegments; i++)
-        {
-            if (vertices.Count < numSegments * numVertices)
-            {
-                // add new vertices to the base of the vine
-                Vector3 start = pathPoints[0];
-                Vector3 end = pathPoints[1];
-                makeRing(start, end, true);
-            }
-            else
-            {
-                // push old vertices along the vine
-                //TODO: also need to offset position based on change in rotation
-                Vector3 start = pathPoints[numSegments - i - 1];
-                Vector3 end = pathPoints[numSegments - i];
-                Vector3 positionOffset = (end - start) / growthInterval * Time.deltaTime;
-
-                //FIXME: rotation is wrong
-                Quaternion startRotation = Quaternion.FromToRotation(Vector3.up, (end - start));
-                Quaternion endRotation = Quaternion.FromToRotation(Vector3.up, (end - pathPoints[numSegments - i + 1]));
-                Quaternion rotation = Quaternion.Slerp(
-                                        startRotation,
-                                        endRotation,
-                                        ellapsedTime % growthInterval / growthInterval);
-                Matrix4x4 mR = Matrix4x4.Rotate(rotation);
-                Matrix4x4 mT = Matrix4x4.Translate(positionOffset);
-                Matrix4x4 m = mT.inverse * mR * mT;
-                m = mT;
-                for (var j = 0; j < numVertices; j++)
-                {
-                    // vertices[i * numVertices + j] += positionOffset;
-                    Matrix4x4 mT2 = Matrix4x4.Translate(start + positionOffset);
-                    //FIXME: translation may be slightly off. Basically need to translate to origin, rotate, translate back, translate to new position
-                    vertices[i * numVertices + j] = mT2.inverse.MultiplyPoint(vertices[i * numVertices + j]);
-                    vertices[i * numVertices + j] = mR.MultiplyPoint(vertices[i * numVertices + j]);
-                    vertices[i * numVertices + j] = mT2.MultiplyPoint(vertices[i * numVertices + j]);
-                    vertices[i * numVertices + j] = m.MultiplyPoint(vertices[i * numVertices + j]);
-
-                }
-            }
-        }
-        ellapsedTime += Time.deltaTime;
-    }
-
-    /// <summary>
-    /// creates a growing mesh that extend along the path defined by pathPoints
-    /// over time.
-    /// Tip is the leading edge. New vertices are added to the tip
-    /// </summary>
-    void updateVineMeshPull()
+    void updateVineMesh()
     {
         vertices.Clear();
-        indices.Clear();
+        // use ellapsedTime to determine number of segments
+        int numSegments = Mathf.FloorToInt(t);
+        float segmentT = (t % 1);
+        print("numSegments: " + numSegments + ", segmentT: " + segmentT);
 
-        Vector3 start, end;
+        for (var i = 0; i < numSegments; i++)
+        {
+            Matrix4x4 m = getTransformationMatrix(i, segmentT);
+            for (var j = 0; j < model.Count; j++)
+            {
+                vertices.Add(m.MultiplyPoint3x4(model[j]));
+            }
+        }
 
-        // use ellapsedTime to determine which segment to grow
-        int segment = Mathf.FloorToInt(ellapsedTime / growthInterval);
-        float t = ellapsedTime % growthInterval / growthInterval;
-        // print("ratio: " + ellapsedTime / growthInterval + " segment: " + segment + " t: " + t);
-
-        //FIXME: if t=0 or 1, the ring direction is wrong
-
-        //define tip position
-        start = pathPoints[segment];
-        end = pathPoints[segment + 1];
-        // Vector3 tip = Vector3.Lerp(start, end, t);
-        Vector3 tip = Vector3.Lerp(start, end, t);
-
-        makeRing(start, tip, true);
-        makeRing(tip, end, true);
-
-        // //segment n
-        // start = pathPoints[pathPoints.Length - 2];
-        // end = pathPoints[pathPoints.Length - 1];
-        // makeRing(start, end, false);
-
-        // for (int i = 0; i < pathPoints.Length - 1; i++)
-        // {
-        //     for (int j = 0; j < numVertices - 1; j++)
-        //     {
-        //         indices.AddRange(new int[] { i * numVertices + j, (i + 1) * numVertices + j, i * numVertices + j + 1 });
-        //         indices.AddRange(new int[] { (i + 1) * numVertices + j, (i + 1) * numVertices + j + 1, i * numVertices + j + 1 });
-        //     }
-        //     indices.AddRange(new int[] { (i + 1) * numVertices - 1, (i + 2) * numVertices - 1, i * numVertices });
-        //     indices.AddRange(new int[] { (i + 2) * numVertices - 1, (i + 1) * numVertices, i * numVertices });
-        // }
-
-        // mesh.Clear();
-        // mesh.vertices = vertices.ToArray();
-        // mesh.triangles = indices.ToArray();
-        // mesh.RecalculateNormals();
-
-        // ellapsedTime += Time.deltaTime;
     }
 
+    Matrix4x4 getTransformationMatrix(int segment, float segmentT)
+    {
+        Vector3 prev = segment == 0 ?
+                            pathPoints[0] - (pathPoints[1] - pathPoints[0]) :
+                            pathPoints[segment - 1];
+        Vector3 start = pathPoints[segment];
+        Vector3 end = segment == pathPoints.Length - 1 ?
+                        pathPoints[pathPoints.Length - 1] + (pathPoints[pathPoints.Length - 1] - pathPoints[pathPoints.Length - 2]) :
+                        pathPoints[segment + 1];
+        Vector3 next = segment == pathPoints.Length - 2 ?
+                        pathPoints[pathPoints.Length - 1] + (pathPoints[pathPoints.Length - 1] - pathPoints[pathPoints.Length - 2]) * 2 :
+                        pathPoints[segment + 2];
+
+        Vector3 forward1 = (end - start).normalized;
+        Vector3 forward2 = (next - end).normalized;
+
+        Quaternion q1 = Quaternion.LookRotation(forward1, Vector3.Cross(Vector3.up, forward1));
+        Quaternion q2 = Quaternion.LookRotation(forward2, Vector3.Cross(Vector3.up, forward2));
+        Quaternion q = Quaternion.Slerp(q1, q2, segmentT);
+
+        Matrix4x4 mT = Matrix4x4.Translate(Vector3.Lerp(start, end, segmentT));
+        Matrix4x4 mR = Matrix4x4.Rotate(q);
+        Matrix4x4 m = mT * mR;
+
+        return m;
+    }
 
     /// <summary>
     /// creates a cylinder mesh along the entire path defined by pathPoints
@@ -213,6 +161,22 @@ public class Vines : MonoBehaviour
             float angle = 2 * Mathf.PI * j / numVertices;
             Vector3 circlePoint = Mathf.Cos(angle) * side + Mathf.Sin(angle) * forward;
             vertices.Add((atStart ? start : end) + circlePoint * radius);
+        }
+    }
+
+    /// <summary>
+    /// creates a ring model
+    /// </summary>
+    void makeRingModel()
+    {
+        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, Vector3.up);
+        Vector3 side = rotation * Vector3.right;
+        Vector3 forward = rotation * Vector3.forward;
+        for (int j = 0; j < numVertices; j++)
+        {
+            float angle = 2 * Mathf.PI * j / numVertices;
+            Vector3 circlePoint = Mathf.Cos(angle) * side + Mathf.Sin(angle) * forward;
+            model.Add(circlePoint * radius);
         }
     }
 
