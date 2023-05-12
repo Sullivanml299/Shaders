@@ -251,7 +251,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724412253}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.58, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -671,17 +671,27 @@ MonoBehaviour:
   auto: 0
   speed: 1
   model: {fileID: 605062076}
+  look: {x: 0, y: 1, z: 0}
+  tangent: {x: 0, y: 0, z: 1}
   debugDraw: 1
   drawControlPoints: 1
   drawCurvePoints: 0
   drawTangents: 0
+  tangentColor: {r: 1, g: 0, b: 0, a: 1}
+  drawCurrentPosition: 0
+  positionColor: {r: 1, g: 0.9819826, b: 0, a: 1}
+  drawTestPoint: 0
+  testPointColor: {r: 0.015686274, g: 1, b: 0.9428557, a: 1}
   drawCurrentVelocity: 1
-  drawCurrentPosition: 1
-  drawTestPoint: 1
+  velocityColor: {r: 0, g: 0, b: 1, a: 1}
   drawUpVector: 1
+  upVectorColor: {r: 1, g: 1, b: 1, a: 1}
   drawLookVector: 1
-  look: {x: 0, y: 1, z: 0}
-  tangent: {x: 0, y: 0, z: 1}
+  lookVectorColor: {r: 1, g: 0.70692813, b: 0, a: 1}
+  drawModelForward: 1
+  modelForwardColor: {r: 0.90027857, g: 0, b: 1, a: 1}
+  drawModelUp: 1
+  modelUpColor: {r: 0, g: 1, b: 0.0072114468, a: 1}
 --- !u!4 &1581594779
 Transform:
   m_ObjectHideFlags: 0

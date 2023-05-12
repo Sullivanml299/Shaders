@@ -18,19 +18,35 @@ public class CatmullVelocity : MonoBehaviour
     public bool auto = false;
     [Range(0.5f, 5f)]
     public float speed = 1f;
-
     public GameObject model; // model to move along the spline. Not related to modelPosition
+    public Vector3 look = Vector3.up;
+    public Vector3 tangent = Vector3.forward;
+    // debug draw options
+    [Header("Debug Draw")]
     public bool debugDraw = true;
+    [Header("Spline")]
     public bool drawControlPoints = true;
     public bool drawCurvePoints = true;
     public bool drawTangents = true;
-    public bool drawCurrentVelocity = true;
+    public Color tangentColor = Color.red;
+
+    [Header("Rotation")]
     public bool drawCurrentPosition = true;
+    public Color positionColor = Color.green;
     public bool drawTestPoint = true;
+    public Color testPointColor = Color.yellow;
+    public bool drawCurrentVelocity = true;
+    public Color velocityColor = Color.blue;
     public bool drawUpVector = true;
+    public Color upVectorColor = Color.magenta;
     public bool drawLookVector = true;
-    public Vector3 look = Vector3.up;
-    public Vector3 tangent = Vector3.forward;
+    public Color lookVectorColor = Color.cyan;
+
+    [Header("Model")]
+    public bool drawModelForward = true;
+    public Color modelForwardColor = Color.white;
+    public bool drawModelUp = true;
+    public Color modelUpColor = Color.black;
 
 
     List<Vector3> pathPoints;
@@ -40,9 +56,6 @@ public class CatmullVelocity : MonoBehaviour
     Vector3 TestPosition = new Vector3(-0.5f, 0, 0); // position of test point on the spline
     Vector3 modelPosition = new Vector3(-0.5f, 0, 0); // position of test point in an imaginary model
     Vector3 up = Vector3.up;
-    Quaternion correctionRotation;
-    bool isSet = false;
-
 
     // Start is called before the first frame update
     void Start()
@@ -60,22 +73,26 @@ public class CatmullVelocity : MonoBehaviour
         updateCurrentPosition(segment, segmentT);
         updateVelocityVector(segment, segmentT);
         updateTestPosition(segment, segmentT);
-        moveModelAlongPath();
+        moveModelAlongPath(segment, segmentT);
     }
 
-    void moveModelAlongPath()
+    //TODO: test a setting to allow for a starting rotational offset
+    void moveModelAlongPath(int segment, float segmentT)
     {
-        //Account for current rotation so that I can keep the desired part of the model facing forward
-        if (!isSet)
-        {
-            //subtract current rotation from caluclated starting rotation
-            correctionRotation = Quaternion.Inverse(model.transform.rotation) * Quaternion.LookRotation(currentVelocity, Vector3.up);
-            isSet = true;
-        }
+
+        up = Vector3.Cross(currentVelocity, Vector3.up).normalized;
         model.transform.position = currentPosition;
-        model.transform.rotation = Quaternion.LookRotation(currentVelocity, Vector3.up);//* correctionRotation;
+        model.transform.rotation = getRotation(segment, segmentT);
         tangent = currentVelocity;
         look = Quaternion.LookRotation(currentVelocity, Vector3.up).eulerAngles;
+    }
+
+    Quaternion getRotation(int segment, float segmentT)
+    {
+        Quaternion q1 = Quaternion.LookRotation(tangents[segment]);
+        Quaternion q2 = Quaternion.LookRotation(tangents[segment + 1]);
+        Quaternion q = Quaternion.Slerp(q1, q2, segmentT);
+        return q;
     }
 
     void updateTestPosition(int segment, float segmentT)
@@ -224,35 +241,47 @@ public class CatmullVelocity : MonoBehaviour
             //draw current position
             if (drawCurrentPosition)
             {
-                Gizmos.color = Color.yellow;
+                Gizmos.color = positionColor;
                 Gizmos.DrawSphere(currentPosition, 0.1f);
             }
 
             //draw test position
             if (drawTestPoint)
             {
-                Gizmos.color = Color.cyan;
+                Gizmos.color = testPointColor;
                 Gizmos.DrawSphere(TestPosition, 0.1f);
             }
 
             //draw up
             if (drawUpVector)
             {
-                Gizmos.color = Color.red;
-                Gizmos.DrawLine(currentPosition, currentPosition + up);
+                Gizmos.color = upVectorColor;
+                Gizmos.DrawLine(currentPosition, currentPosition + up.normalized);
             }
 
             if (drawLookVector)
             {
-                Gizmos.color = Color.green;
+                Gizmos.color = lookVectorColor;
                 Gizmos.DrawLine(currentPosition, currentPosition + look.normalized);
             }
 
             //draw current velocity
             if (drawCurrentVelocity)
             {
-                Gizmos.color = Color.cyan;
+                Gizmos.color = velocityColor;
                 Gizmos.DrawLine(currentPosition, currentPosition + currentVelocity.normalized);
+            }
+
+            if (drawModelForward)
+            {
+                Gizmos.color = modelForwardColor;
+                Gizmos.DrawLine(model.transform.position, model.transform.position + model.transform.forward);
+            }
+
+            if (drawModelUp)
+            {
+                Gizmos.color = modelUpColor;
+                Gizmos.DrawLine(model.transform.position, model.transform.position + model.transform.up);
             }
 
         }
