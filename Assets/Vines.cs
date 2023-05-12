@@ -12,7 +12,7 @@ public class Vines : MonoBehaviour
     public LineRenderer lineRenderer;
     public bool debugDraw = true;
     public bool drawMesh = true;
-    [Range(0f, 20f)]
+    [Range(0f, 60f)]
     public float t = 0f; // time along the spline
 
     Mesh mesh;
@@ -60,10 +60,10 @@ public class Vines : MonoBehaviour
     void updateVineMesh()
     {
         vertices.Clear();
+        indices.Clear();
         // use ellapsedTime to determine number of segments
         int numSegments = Mathf.FloorToInt(t);
         float segmentT = (t % 1);
-        print("numSegments: " + numSegments + ", segmentT: " + segmentT);
 
         for (var i = 0; i < numSegments; i++)
         {
@@ -72,8 +72,13 @@ public class Vines : MonoBehaviour
             {
                 vertices.Add(m.MultiplyPoint3x4(model[j]));
             }
+            if (i > 1) tessellate(i - 2);
         }
 
+        mesh.Clear();
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = indices.ToArray();
+        mesh.RecalculateNormals();
     }
 
     Matrix4x4 getTransformationMatrix(int segment, float segmentT)
@@ -101,6 +106,18 @@ public class Vines : MonoBehaviour
         Matrix4x4 m = mT * mR;
 
         return m;
+    }
+
+    void tessellate(int i)
+    {
+        //i = segment number
+        for (int j = 0; j < numVertices - 1; j++)
+        {
+            indices.AddRange(new int[] { i * numVertices + j, (i + 1) * numVertices + j, i * numVertices + j + 1 });
+            indices.AddRange(new int[] { (i + 1) * numVertices + j, (i + 1) * numVertices + j + 1, i * numVertices + j + 1 });
+        }
+        indices.AddRange(new int[] { (i + 1) * numVertices - 1, (i + 2) * numVertices - 1, i * numVertices });
+        indices.AddRange(new int[] { (i + 2) * numVertices - 1, (i + 1) * numVertices, i * numVertices });
     }
 
     /// <summary>
@@ -169,7 +186,7 @@ public class Vines : MonoBehaviour
     /// </summary>
     void makeRingModel()
     {
-        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, Vector3.up);
+        Quaternion rotation = Quaternion.FromToRotation(Vector3.up, Vector3.forward);
         Vector3 side = rotation * Vector3.right;
         Vector3 forward = rotation * Vector3.forward;
         for (int j = 0; j < numVertices; j++)
