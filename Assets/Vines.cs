@@ -55,16 +55,23 @@ public class Vines : MonoBehaviour
     /// <summary>
     /// creates a growing mesh that extend along the path defined by pathPoints
     /// over time.
-    /// Adds vertices to the base of the vine. "Pushes" old vertices along the vine. 
     /// </summary>
     void updateVineMesh()
     {
         vertices.Clear();
         indices.Clear();
-        // use ellapsedTime to determine number of segments
         int numSegments = Mathf.FloorToInt(t);
         float segmentT = (t % 1);
 
+        // add vertices at the start so that there is always a "base"
+        Matrix4x4 m_base = getTransformationMatrix(0, 0);
+        for (var j = 0; j < model.Count; j++)
+        {
+            vertices.Add(m_base.MultiplyPoint3x4(model[j]));
+        }
+        if (numSegments > 0) tessellate(0);
+
+        // add vertices for each segment
         for (var i = 0; i < numSegments; i++)
         {
             Matrix4x4 m = getTransformationMatrix(i, segmentT);
@@ -72,8 +79,10 @@ public class Vines : MonoBehaviour
             {
                 vertices.Add(m.MultiplyPoint3x4(model[j]));
             }
-            if (i > 1) tessellate(i - 2);
+            if (i > 0) tessellate(i);
         }
+
+
 
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
@@ -118,6 +127,11 @@ public class Vines : MonoBehaviour
         }
         indices.AddRange(new int[] { (i + 1) * numVertices - 1, (i + 2) * numVertices - 1, i * numVertices });
         indices.AddRange(new int[] { (i + 2) * numVertices - 1, (i + 1) * numVertices, i * numVertices });
+    }
+
+    void tessellateTip()
+    {
+
     }
 
     /// <summary>
@@ -220,9 +234,9 @@ public class Vines : MonoBehaviour
 
             if (vertices.Count > 0)
             {
-                Gizmos.color = Color.cyan;
                 for (int j = 0; j < vertices.Count; j++)
                 {
+                    Gizmos.color = Color.Lerp(Color.white, Color.cyan, (float)j / vertices.Count);
                     Vector3 vertex = vertices[j];
                     Gizmos.DrawSphere(transform.position + vertex, radius * 0.1f);
                 }
