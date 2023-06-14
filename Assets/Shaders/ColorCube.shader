@@ -10,7 +10,8 @@ Shader "Unlit/ColorCube"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent"}
+        Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
 
         Pass
@@ -40,18 +41,19 @@ Shader "Unlit/ColorCube"
             float4 _MainTex_ST;
 
             v2f vert (appdata v)
-            {
+            {   
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                // o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.color = v.vertex+0.5;
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-
-                return i.color;
+                float scale = 10;
+                bool clear = (uint(i.uv.x*scale) & 1) ^ (uint(i.uv.y*scale) & 1);
+                return float4(i.color.xyz, clear ? 1 : 0);
             }
             ENDCG
         }
