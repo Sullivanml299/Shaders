@@ -51,8 +51,10 @@ Shader "Unlit/ColorCube"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float scale = 10;
-                bool clear = (uint(i.uv.x*scale) & 1) ^ (uint(i.uv.y*scale) & 1);
+                float scale = 5;
+                // bool clear = (uint(i.uv.x*scale) & 1) ^ (uint(i.uv.y*scale) & 1);
+                //if inside a local cirlce
+                bool clear = ((i.uv.x*scale-0.5)*(i.uv.x*scale-0.5) + (i.uv.y*scale-0.5)*(i.uv.y*scale-0.5))%1/scale <= 0.25/scale;
                 return float4(i.color.xyz, clear ? 1 : 0);
             }
             ENDCG
