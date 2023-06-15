@@ -7,24 +7,27 @@ using UnityEngine;
 
 public class ColorPicker : MonoBehaviour
 {
+    public MeshRenderer meshRenderer;
+    public Color pickedColor = Color.white;
+
     Vector3[] vertices;
+    Material material;
+
+    Vector2 offset = Vector2.zero;
 
     // Start is called before the first frame update
     void Start()
     {
         Mesh mesh = GetComponent<MeshFilter>().mesh;
         vertices = mesh.vertices;
-        printVertices();
+        print("Vertices: " + vertices.Length);
+
+        material = meshRenderer.material;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButton(1))
-        {
-            printVertices();
-        }
-
         if (!Input.GetMouseButton(0))
             return;
 
@@ -32,15 +35,29 @@ public class ColorPicker : MonoBehaviour
         if (!Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
             return;
 
-        print("Index: " + hit.triangleIndex + " Barycentric: " + hit.barycentricCoordinate + " UV: " + hit.textureCoord);
+        // print("Index: " + hit.triangleIndex + " Barycentric: " + hit.barycentricCoordinate + " UV: " + hit.textureCoord);
 
-    }
-
-    void printVertices()
-    {
-        for (int i = 0; i < vertices.Length; i++)
+        if (offset != hit.textureCoord)
         {
-            print(vertices[i]);
+            material.SetVector("_Offset", new Vector4(hit.textureCoord.x, hit.textureCoord.y, 0, 0));
+            offset = hit.textureCoord;
+            var colorVector = (transform.InverseTransformPoint(hit.point) + Vector3.one * 0.5f);
+            pickedColor = new(colorVector.x, colorVector.y, colorVector.z);
         }
+
     }
+
+
+
+    // void OnDrawGizmos()
+    // {
+    //     if (vertices == null)
+    //         return;
+
+    //     for (int i = 0; i < vertices.Length; i++)
+    //     {
+    //         Gizmos.color = Color.Lerp(Color.white, Color.red, (float)i / vertices.Length);
+    //         Gizmos.DrawSphere(transform.TransformPoint(vertices[i]), 0.1f);
+    //     }
+    // }
 }

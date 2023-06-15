@@ -6,7 +6,10 @@ Shader "Unlit/ColorCube"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        // _MainTex ("Texture", 2D) = "white" {}
+        _Offset ("Offset", Vector) = (0, 0, 0, 0)
+        _Scale ("Scale", Float) = 5
+        _BackgroundColor ("BackgroundColor", Color) = (0, 0, 0, 0.1)
     }
     SubShader
     {
@@ -19,8 +22,7 @@ Shader "Unlit/ColorCube"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            // make fog work
-            #pragma multi_compile_fog
+
 
             #include "UnityCG.cginc"
 
@@ -37,25 +39,34 @@ Shader "Unlit/ColorCube"
                 float4 color : COLOR;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
+            // sampler2D _MainTex;
+            // float4 _MainTex_ST;
+            float2 _Offset;
+            float _Scale;
+            float4 _BackgroundColor;
 
             v2f vert (appdata v)
             {   
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = v.uv;// TRANSFORM_TEX(v.uv, _MainTex);
                 o.color = v.vertex+0.5;
                 return o;
             }
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float scale = 5;
-                // bool clear = (uint(i.uv.x*scale) & 1) ^ (uint(i.uv.y*scale) & 1);
                 //if inside a local cirlce
-                bool clear = ((i.uv.x*scale-0.5)*(i.uv.x*scale-0.5) + (i.uv.y*scale-0.5)*(i.uv.y*scale-0.5))%1/scale <= 0.25/scale;
-                return float4(i.color.xyz, clear ? 1 : 0);
+                float2 offset = float2(1.0, 1.0);
+                i.uv -= _Offset;
+                i.uv *= _Scale;
+                i.uv = pow(i.uv, 2);
+                bool colored = (i.uv.x + i.uv.y)%1/_Scale <= 0.25/_Scale;
+
+                // return float4(i.color.xyz, colored ? 1 : 0);
+                if (colored) return float4(i.color.xyz, 1);
+                else return _BackgroundColor;
+                
             }
             ENDCG
         }
