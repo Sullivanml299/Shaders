@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Vines : MonoBehaviour
 {
+    
     public Material vineMaterial;
     public float radius = 0.1f;
     public int splineSegmentResolution = 10; // number of points to generate along the spline for each segment
@@ -12,7 +13,7 @@ public class Vines : MonoBehaviour
     public LineRenderer lineRenderer;
     public bool debugDraw = true;
     public bool drawMesh = true;
-    [Range(0f, 60f)]
+    [Range(0f, 59.999f)]
     public float t = 0f; // time along the spline
 
     Mesh mesh;
@@ -82,7 +83,9 @@ public class Vines : MonoBehaviour
             if (i > 0) tessellate(i);
         }
 
-
+        // add vertices for the tip
+        vertices.Add(Vector3.Lerp(pathPoints[numSegments], pathPoints[numSegments + 1], segmentT));
+        tessellateTip();
 
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
@@ -131,7 +134,13 @@ public class Vines : MonoBehaviour
 
     void tessellateTip()
     {
+        //create triangle fan at tip
+        for (int i = 0; i < numVertices - 1; i++)
+        {
+            indices.AddRange(new int[] { vertices.Count - 1, vertices.Count - 2 - i, vertices.Count - 3 - i });
+        }
 
+        indices.AddRange(new int[] { vertices.Count - 1, vertices.Count - 1 - numVertices, vertices.Count - 2 });
     }
 
     /// <summary>
