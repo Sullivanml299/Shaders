@@ -39,10 +39,12 @@ public class ColorPicker : MonoBehaviour
 
         if (offset != hit.textureCoord)
         {
-            material.SetVector("_Offset", new Vector4(hit.textureCoord.x, hit.textureCoord.y, 0, 0));
+            material.SetVector("_MousePos", new Vector4(hit.textureCoord.x, hit.textureCoord.y, 0, 0));
             offset = hit.textureCoord;
             var colorVector = (transform.InverseTransformPoint(hit.point) + Vector3.one * 0.5f);
             pickedColor = new(colorVector.x, colorVector.y, colorVector.z);
+            material.SetVector("_MouseColor", pickedColor);
+            material.SetInteger("_TriangleIndex", hit.triangleIndex);
         }
 
     }
