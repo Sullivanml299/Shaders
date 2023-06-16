@@ -2,10 +2,9 @@ Shader "Unlit/CloudyCube"
 {
     Properties
     {
-        // _MainTex ("Texture", 2D) = "white" {}
-        _Offset ("Offset", Vector) = (0, 0, 0, 0)
+        _MousePos ("Mouse", Vector) = (0, 0, 0, 0)
         _Scale ("Scale", Float) = 5
-        _Bool ("Bool", Integer) = 0
+        _Persistance ("Persistance", Range(0.0, 2.0)) = 1.0
     }
     SubShader
     {
@@ -39,13 +38,13 @@ Shader "Unlit/CloudyCube"
             // float4 _MainTex_ST;
             float2 _Offset;
             float _Scale;
-            uint _Bool;
+            float _Persistance;
 
             v2f vert (appdata v)
             {   
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;// TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = v.uv;
                 o.color = v.vertex+0.5;
                 return o;
             }
@@ -64,10 +63,9 @@ Shader "Unlit/CloudyCube"
 
             float fbm(float2 uv){
                 float total = 0.0;
-                float persistence = 0.5;
-                float lacunarity = 2.0;
+                float persistence = _Persistance;
+                float lacunarity = 2.;
                 float2 shift = float2(100, 100);
-                float2 offset = float2(0, 0);
                 for(int i = 0; i < 4; i++){
                     total += noise(uv)*persistence;
                     uv = uv*lacunarity + shift;
@@ -82,13 +80,16 @@ Shader "Unlit/CloudyCube"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                float2 offset = float2(_SinTime.y,_CosTime.y);
                 i.uv *= _Scale;
+                float2 offset = float2(_SinTime.y,_CosTime.y);
+
                 float4 color = float4(i.color.xyz, 1);
-                float n1 = fbm(i.uv+offset)*2;
-                float n2 = fbm(i.uv-offset)*2;
-                
-                return saturate(color*n1*n2);
+                float n1 = fbm(i.uv+offset);
+                float n2 = fbm(i.uv-offset);
+                float f = fbm(i.uv -offset+ fbm(i.uv + fbm(i.uv + offset)));
+
+                // return saturate(color*n1*n2);
+                return saturate(color*f*n1*n2);
             }
             ENDCG
         }
