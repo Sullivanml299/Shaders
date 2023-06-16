@@ -105,12 +105,20 @@ Shader "Unlit/CloudyCube"
             {
                 float4 color = float4(i.color.xyz, 1);
 
-                if(_MousePos.x>=0 && inFace(pid) && inCircle(i.uv, _MousePos.xy, 0.1)){
+                if(_MousePos.x>=0 && inFace(pid) && inCircle(i.uv, _MousePos.xy, 0.04)){
                     color = _MouseColor;
+                }
+                else if(_MousePos.x>=0 && inFace(pid) && inCircle(i.uv, _MousePos.xy, 0.2)){
+                    float2 offset = (i.uv - _MousePos.xy) * (_SinTime.w) ;
+                    i.uv += offset;
+                    // i.uv *= _Scale;
+
+                    float f = fbm(i.uv+ fbm(i.uv + fbm(i.uv)));
+                    color = saturate(color*f);
                 }
                 else{
                     i.uv *= _Scale;
-                    float2 offset = float2(_SinTime.y,_CosTime.y);
+                    float2 offset = float2(_SinTime.x,_CosTime.x);
                     float n1 = fbm(i.uv+offset);
                     float n2 = fbm(i.uv-offset);
                     float f = fbm(i.uv+ fbm(i.uv + fbm(i.uv + offset)));
