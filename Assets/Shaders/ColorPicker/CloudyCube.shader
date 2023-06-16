@@ -86,7 +86,7 @@ Shader "Unlit/CloudyCube"
                 float4 color = float4(i.color.xyz, 1);
                 float n1 = fbm(i.uv+offset);
                 float n2 = fbm(i.uv-offset);
-                float f = fbm(i.uv -offset+ fbm(i.uv + fbm(i.uv + offset)));
+                float f = fbm(i.uv+ fbm(i.uv + fbm(i.uv + offset)));
 
                 // return saturate(color*n1*n2);
                 return saturate(color*f*n1*n2);
