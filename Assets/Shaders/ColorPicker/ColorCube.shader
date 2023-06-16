@@ -57,7 +57,6 @@ Shader "Unlit/ColorCube"
             fixed4 frag (v2f i) : SV_Target
             {
                 //if inside a local cirlce
-                float2 offset = float2(1.0, 1.0);
                 i.uv -= _Offset;
                 i.uv *= _Scale;
                 i.uv = pow(i.uv, 2);
