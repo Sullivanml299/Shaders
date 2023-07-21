@@ -1,10 +1,7 @@
-Shader "Unlit/ColorCube"
+Shader "Unlit/smoke"
 {
-    Properties
+      Properties
     {
-        _MousePos("Mouse", Vector) = (-1, -1, 0, 0)
-        _MouseColor("Mouse Color", Color) = (0, 0, 0, 0)
-        _TriangleIndex("Triangle Index", Integer) = 0
         _Scale ("Scale", Float) = 5
         _Persistance ("Persistance", Range(0.0, 2.0)) = 1.5
         _InnerRadius ("Inner Radius", Range(0.0, 1.0)) = 0.2
@@ -40,15 +37,13 @@ Shader "Unlit/ColorCube"
                 float4 color : COLOR;
             };
 
-            float2 _MousePos;
             float _Scale;
             float _Persistance;
             float _InnerRadius;
             float _OuterRadius;
             float _RippleSpeed;
             float _RippleFrequency;
-            float4 _MouseColor;
-            uint _TriangleIndex;
+
 
             v2f vert (appdata v)
             {   
@@ -106,55 +101,19 @@ Shader "Unlit/ColorCube"
                 return dot(diff, diff) < radius*radius;
             }
 
-            bool inFace(uint pid){
-                float2 uv = _MousePos.xy;
-                if(uv.x > uv.y){
-                    if(_TriangleIndex == pid || _TriangleIndex == pid+1){
-                        return true;
-                    }
-                    return false;
-                }
-                else{
-                    if(_TriangleIndex == pid || _TriangleIndex == pid-1){
-                        return true;
-                    }
-                    return false;
-                }
-            }
-
             float4 liquid(float4 color, v2f i){
                 i.color *= _Scale;
                 float3 offset = float3(_SinTime.x,_CosTime.x, _SinTime.y);
-                float n1 = fbm(i.color.xyz+offset);
-                float n2 = fbm(i.color.xyz-offset);
-                float f = fbm(i.color.xyz + fbm(i.color.xyz + fbm(i.color.xyz+ offset)));
-                color = color*f*n1*n2;
+                float f = fbm(i.color.xyz + fbm(i.color.xyz+ offset));
+                color = color*f;
                 return color;
             }
 
-            fixed4 frag (v2f i, uint pid:SV_PrimitiveID) : SV_Target
+            fixed4 frag (v2f i) : SV_Target
             {
                 float4 color = float4(i.color.xyz, 1);
                 float4 liquidColor = liquid(color, i);
                 color = liquidColor;
-
-                if(_MousePos.x>=0 && inFace(pid) && inCircle(i.uv, _MousePos.xy, _OuterRadius)){
-                    float2 diff = i.uv - _MousePos.xy;
-                    float dist = length(diff);
-                    float ripple = rippleValue(i.uv, _MousePos.xy, 0.1);
-                    float3 rippleColor = liquidColor.xyz * float3(.01,.01,.01) * ripple*100;
-
-                    //blend outer radius and base color
-                    color.xyz = lerp(rippleColor, liquidColor.xyz, dist/_OuterRadius); 
-
-                    //blend inner radius and base color
-                    if(inCircle(i.uv, _MousePos.xy, _InnerRadius)){
-                        color.xyz = lerp(_MouseColor.xyz, color.xyz, dist/_InnerRadius);
-                    } 
-                }
-                else{
-                    color = liquidColor;
-                }
 
                 return saturate(color);
             }
