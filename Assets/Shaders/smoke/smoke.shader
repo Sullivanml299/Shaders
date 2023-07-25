@@ -109,11 +109,19 @@ Shader "Unlit/smoke"
                 return color;
             }
 
+            float alphaAdjustment(float3 position){
+                float3 center = float3(0, 0, 0);
+                float t = distance(position, center);
+                float alpha = lerp(1, 0, t);
+                return alpha;
+            }
+
             fixed4 frag (v2f i) : SV_Target
             {
                 float4 color = float4(i.color.xyz, 1);
                 float4 liquidColor = liquid(color, i);
                 color = liquidColor;
+                color.a = alphaAdjustment(i.color.xyz-0.5);
 
                 return saturate(color);
             }
